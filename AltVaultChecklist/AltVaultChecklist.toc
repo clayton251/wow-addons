@@ -1,0 +1,18 @@
+## Interface: 120105
+## Title: Alt Vault Checklist
+## Notes: Account-wide Mythic+ key, Great Vault, weekly, and BiS gear checklists, plus a party key board. Registers each character you log in on.
+## Author: Clayton
+## Version: 2.1.0
+## SavedVariables: AltVaultChecklistDB
+## IconTexture: Interface\Icons\INV_Relics_Hourglass
+## AddonCompartmentFunc: AltVaultChecklist_OnAddonCompartmentClick
+## AddonCompartmentFuncOnEnter: AltVaultChecklist_OnAddonCompartmentEnter
+## AddonCompartmentFuncOnLeave: AltVaultChecklist_OnAddonCompartmentLeave
+## X-Category: Mythic Plus
+## X-Expansion: Midnight
+
+Core.lua
+GearData.lua
+Collector.lua
+PartyKeys.lua
+UI.lua
