@@ -232,16 +232,21 @@ function ns.RequestSync(force)
   ns.QueueAddonMessage(string.format("Q|%d|%s", PROTO, ns.VERSION), { urgent = true })
 end
 
-function ns.BroadcastOrder(order)
+function ns.BroadcastOrder(order, opts)
+  opts = opts or {}
   if not order then
     return
   end
-  if not ns.IsLeaderOrAssist() then
-    ns.Print("Only the group leader or a raid assistant can share the kick order in a raid. In a party, anyone can share.")
+  if not opts.force and not ns.IsLeaderOrAssist() then
+    if not opts.silent then
+      ns.Print("Only the group leader or a raid assistant can share the kick order in a raid. In a party, anyone can share.")
+    end
     return
   end
   if not ns.AddonChannel() then
-    ns.Print("You are not in a group.")
+    if not opts.silent then
+      ns.Print("You are not in a group.")
+    end
     return
   end
   local body = ns.SerializeOrder(order)
@@ -249,7 +254,7 @@ function ns.BroadcastOrder(order)
     return
   end
   local chunks = ChunkBody("O", order.seq or 1, body)
-  if ns.InChatLockdown() then
+  if ns.InChatLockdown() and not opts.silent then
     ns.Print("Addon messages are blocked (" .. (ns.LockdownReason() or "lockdown") .. "). The order is queued and will sync when the encounter or key ends.")
   end
   for i = 1, #chunks do
@@ -338,13 +343,11 @@ function ns.OnAddonMessage(prefix, text, channel, sender)
       ns.RefreshAssignUI()
     end
   elseif kind == "Q" then
-    -- Sync request. Leaders/assists (or anyone in a party) answer with the current order and presence.
+    -- Sync request. The leader/assist replies immediately; anyone else who
+    -- holds a current order replies after a short delay if no one else has.
     ns.SendPresence()
-    if ns.IsLeaderOrAssist() then
-      local order = ns.GetOrder()
-      if order and order.seq and order.seq > 0 then
-        ns.BroadcastOrder(order)
-      end
+    if ns.ReplyToSyncRequest then
+      ns.ReplyToSyncRequest()
     end
   elseif kind == "O" then
     local proto, seq, index, total, chunk = rest:match("^(%d+)|(%d+)|(%d+)|(%d+)|(.*)$")
@@ -390,6 +393,9 @@ end
 local ticker
 
 local function Tick()
+  if ns._RunDelayed then
+    ns._RunDelayed()
+  end
   ns.FlushComm()
   ns.PrunePeers()
   if IsInGroup and IsInGroup() and not ns.InChatLockdown() then
@@ -422,44 +428,278 @@ function ns.InitComm()
   end
 end
 
-function ns.OnLogin()
-  ns.SendPresence()
-  if IsInGroup and IsInGroup() then
-    ns.RequestSync(true)
+-- Delayed callbacks without assuming C_Timer is present.
+local delayed = {}
+local function After(sec, fn)
+  if C_Timer and C_Timer.After then
+    C_Timer.After(sec, fn)
+    return
   end
-  if ns.RestoreSavedOrder then
-    ns.RestoreSavedOrder()
+  delayed[#delayed + 1] = { when = ns.Now() + sec, fn = fn }
+end
+
+function ns._RunDelayed()
+  if #delayed == 0 then
+    return
+  end
+  local now = ns.Now()
+  local keep = {}
+  for i = 1, #delayed do
+    local item = delayed[i]
+    if now >= (item.when or 0) then
+      item.fn()
+    else
+      keep[#keep + 1] = item
+    end
+  end
+  delayed = keep
+end
+
+local wasInGroup = false
+local leaveToken = 0
+local pruneToken = 0
+local joinToken = 0
+local lastSyncReply = 0
+local SYNC_REPLY_GAP = 3
+
+local function InGroupNow()
+  if ns.InAnyGroup then
+    return ns.InAnyGroup()
+  end
+  return (IsInGroup and IsInGroup()) and true or false
+end
+
+local function HandleDisband(opts)
+  opts = opts or {}
+  if InGroupNow() then
+    return
+  end
+  -- Always drop outbound messages and peer state so a later group does
+  -- not receive a stale order queued for the previous one.
+  if ns.AutoClearOnDisbandEnabled and ns.AutoClearOnDisbandEnabled() then
+    if ns.ClearKickList then
+      ns.ClearKickList({ announce = opts.announce and true or false })
+    elseif ns.ClearCommQueues then
+      ns.ClearCommQueues()
+    end
+  else
+    if ns.ClearCommQueues then
+      ns.ClearCommQueues()
+    end
+    if ns.Peers then
+      wipe(ns.Peers)
+    end
+    if ns.RefreshAllUI then
+      ns.RefreshAllUI()
+    end
+  end
+  wasInGroup = false
+end
+
+-- Party-to-raid conversion can briefly fire GROUP_LEFT. Wait and re-check
+-- so we only clear when no home or instance group remains.
+local function ScheduleDisbandCheck()
+  leaveToken = leaveToken + 1
+  local token = leaveToken
+  After(0.5, function()
+    if token ~= leaveToken then
+      return
+    end
+    if InGroupNow() then
+      wasInGroup = true
+      return
+    end
+    HandleDisband({ announce = true })
+  end)
+end
+
+local function HandleJoin()
+  wasInGroup = true
+  leaveToken = leaveToken + 1 -- cancel a pending disband (e.g. party-to-raid)
+  -- If we kept a list because auto-clear is off, do not let its old
+  -- sequence win in a group we are not leading.
+  if not (UnitIsGroupLeader and UnitIsGroupLeader("player")) then
+    if ns.InvalidateOrderSeq then
+      ns.InvalidateOrderSeq()
+    end
+  end
+  ns.SendPresence()
+  ns.RequestSync(true)
+  -- If we are the actual leader and still have no list after peers reply,
+  -- build the default kick order from the roster.
+  joinToken = joinToken + 1
+  local token = joinToken
+  After(2, function()
+    if token ~= joinToken then
+      return
+    end
+    if not InGroupNow() then
+      return
+    end
+    if not (UnitIsGroupLeader and UnitIsGroupLeader("player")) then
+      return
+    end
+    if ns.HasActiveOrder and ns.HasActiveOrder() then
+      return
+    end
+    if ns.AutoFillPartyOrder then
+      ns.AutoFillPartyOrder()
+    end
+    if ns.ShareOrder then
+      ns.ShareOrder(false)
+    end
+  end)
+end
+
+function ns.ReplyToSyncRequest()
+  local function send()
+    local now = ns.Now()
+    if (now - lastSyncReply) < SYNC_REPLY_GAP then
+      return
+    end
+    if (now - (ns._lastAppliedOrder or 0)) < 1.5 then
+      return
+    end
+    local order = ns.GetOrder and ns.GetOrder()
+    if not order or not order.seq or order.seq <= 0 then
+      return
+    end
+    if not ns.AddonChannel() then
+      return
+    end
+    lastSyncReply = now
+    ns.BroadcastOrder(order, { silent = true, force = not ns.IsLeaderOrAssist() })
+  end
+  if ns.IsLeaderOrAssist() then
+    send()
+    return
+  end
+  local order = ns.GetOrder and ns.GetOrder()
+  if order and order.seq and order.seq > 0 then
+    After(1.5, function()
+      if InGroupNow() then
+        send()
+      end
+    end)
+  end
+end
+
+local function SchedulePruneAndBroadcast()
+  if not InGroupNow() then
+    return
+  end
+  pruneToken = pruneToken + 1
+  local token = pruneToken
+  After(1.5, function()
+    if token ~= pruneToken then
+      return
+    end
+    if not InGroupNow() then
+      return
+    end
+    if not ns.PruneMissingMembers then
+      return
+    end
+    local changed = ns.PruneMissingMembers()
+    if changed then
+      if ns.IsLeaderOrAssist() and ns.BroadcastOrder and ns.GetOrder then
+        ns.BroadcastOrder(ns.GetOrder(), { silent = true })
+      end
+      if ns.RefreshAllUI then
+        ns.RefreshAllUI()
+      end
+    end
+  end)
+end
+
+local function OnGroupStateChange()
+  if InGroupNow() then
+    leaveToken = leaveToken + 1
+    if not wasInGroup then
+      HandleJoin()
+    else
+      if ns.EnsureOrderMatchesRoster then
+        ns.EnsureOrderMatchesRoster()
+      end
+      SchedulePruneAndBroadcast()
+      if (ns.Now() - lastPresence) > 2 then
+        ns.SendPresence()
+      end
+    end
+  else
+    if wasInGroup then
+      ScheduleDisbandCheck()
+    end
   end
   if ns.RefreshAllUI then
     ns.RefreshAllUI()
   end
 end
 
-function ns.OnEnteringWorld()
+function ns.OnLogin()
+  if InGroupNow() then
+    if ns.RestoreSavedOrder then
+      ns.RestoreSavedOrder()
+    end
+    wasInGroup = true
+    ns.SendPresence()
+    ns.RequestSync(true)
+  else
+    if ns.AutoClearOnDisbandEnabled and ns.AutoClearOnDisbandEnabled() then
+      -- /reload or login while solo: drop a stale list quietly.
+      HandleDisband({ announce = false })
+    else
+      if ns.RestoreSavedOrder then
+        ns.RestoreSavedOrder()
+      end
+    end
+    wasInGroup = false
+  end
   if ns.RefreshAllUI then
     ns.RefreshAllUI()
   end
-  if IsInGroup and IsInGroup() then
-    ns.SendPresence()
-    ns.RequestSync()
+end
+
+function ns.OnEnteringWorld(...)
+  local isLogin, isReload = ...
+  isLogin = ns.Plain(isLogin)
+  isReload = ns.Plain(isReload)
+  if ns.RefreshAllUI then
+    ns.RefreshAllUI()
+  end
+  if InGroupNow() then
+    leaveToken = leaveToken + 1
+    if not wasInGroup then
+      HandleJoin()
+    else
+      ns.SendPresence()
+      ns.RequestSync()
+    end
+  else
+    -- Immediate clear only on login/reload, where IsInGroup is already
+    -- reliable. Mid-session zoning uses the delayed check so a brief
+    -- ungrouped flicker cannot wipe the list.
+    if isLogin or isReload then
+      if ns.AutoClearOnDisbandEnabled and ns.AutoClearOnDisbandEnabled() then
+        HandleDisband({ announce = false })
+      end
+      wasInGroup = false
+    elseif wasInGroup then
+      ScheduleDisbandCheck()
+    end
   end
 end
 
 function ns.OnRosterUpdate()
-  if ns.EnsureOrderMatchesRoster then
-    ns.EnsureOrderMatchesRoster()
-  end
-  if IsInGroup and IsInGroup() then
-    if (ns.Now() - lastPresence) > 2 then
-      ns.SendPresence()
-    end
-    ns.RequestSync()
-  else
-    wipe(ns.Peers)
-  end
-  if ns.RefreshAllUI then
-    ns.RefreshAllUI()
-  end
+  OnGroupStateChange()
+end
+
+function ns.OnGroupLeft()
+  OnGroupStateChange()
+end
+
+function ns.OnGroupJoined()
+  OnGroupStateChange()
 end
 
 function ns.OnSpecOrRoleChanged()
@@ -508,4 +748,10 @@ end
 
 function ns.PendingCommCount()
   return #outQueue + #lockdownQueue
+end
+
+function ns.ClearCommQueues()
+  wipe(outQueue)
+  wipe(lockdownQueue)
+  wipe(incoming)
 end

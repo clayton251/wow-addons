@@ -178,6 +178,66 @@ function ns.RestoreSavedOrder()
   end
 end
 
+function ns.HasActiveOrder()
+  if not order then
+    return false
+  end
+  if (order.seq or 0) > 0 then
+    return true
+  end
+  for _, group in ipairs(order.groups or {}) do
+    if group.members and #group.members > 0 then
+      return true
+    end
+  end
+  return false
+end
+
+function ns.ResetOrder()
+  order = EmptyOrder()
+  if wipe then
+    wipe(ns.KickEstimates)
+  else
+    ns.KickEstimates = {}
+  end
+  PersistOrder()
+end
+
+-- Keep the current list but drop its sequence so it cannot overwrite a
+-- new group's order after auto-clear was turned off.
+function ns.InvalidateOrderSeq()
+  if not order then
+    return
+  end
+  order.seq = 0
+  PersistOrder()
+end
+
+-- Clear the kick rotation and raid groups (memory + lastOrder), reset the
+-- pointer and sync sequence, drop queued comms, and refresh the bar/UI.
+-- Boss notes and user settings are left alone.
+function ns.ClearKickList(opts)
+  opts = opts or {}
+  local had = ns.HasActiveOrder()
+  ns.ResetOrder()
+  if ns.ClearCommQueues then
+    ns.ClearCommQueues()
+  end
+  if ns.Peers then
+    if wipe then
+      wipe(ns.Peers)
+    else
+      ns.Peers = {}
+    end
+  end
+  if ns.RefreshAllUI then
+    ns.RefreshAllUI()
+  end
+  if had and opts.announce then
+    ns.Print("Group disbanded: kick list cleared.")
+  end
+end
+
 function ns.CanEditOrder()
   return ns.IsLeaderOrAssist()
 end
@@ -338,26 +398,21 @@ function ns.ClearGroup(groupIndex)
 end
 
 function ns.EnsureOrderMatchesRoster()
+  -- Immediate pass: refresh class/spell info. Members who briefly drop
+  -- during a load are not removed here; ns.PruneMissingMembers does that
+  -- after a short debounce from the roster handler.
   local roster = ns.GetRosterMap()
   local changed = false
   for _, group in ipairs(order.groups) do
-    local i = 1
-    while i <= #group.members do
-      local member = group.members[i]
+    for _, member in ipairs(group.members) do
       local row = roster[ns.NameKey(member.fullName)]
-      if not row and (IsInGroup and IsInGroup()) then
-        -- Keep missing members for a bit (loading / brief drop) — do not auto-delete.
-        i = i + 1
-      else
-        if row then
-          member.classFile = row.classFile or member.classFile
-          if row.kick then
-            member.spell = row.kick.spell or member.spell
-            member.spellID = row.kick.spellID or member.spellID
-            member.cooldown = row.kick.cooldown or member.cooldown
-          end
+      if row then
+        member.classFile = row.classFile or member.classFile
+        if row.kick then
+          member.spell = row.kick.spell or member.spell
+          member.spellID = row.kick.spellID or member.spellID
+          member.cooldown = row.kick.cooldown or member.cooldown
         end
-        i = i + 1
       end
     end
     if group.nextIndex > math.max(1, #group.members) then
@@ -368,6 +423,65 @@ function ns.EnsureOrderMatchesRoster()
   if changed then
     PersistOrder()
   end
+end
+
+-- Remove players who are no longer in the group. Conservative about
+-- half-loaded rosters so a loading screen does not empty the list.
+-- Returns true if the order changed. The leader/assist increments seq so
+-- the pruned order can be broadcast.
+function ns.PruneMissingMembers()
+  if not ns.InAnyGroup or not ns.InAnyGroup() then
+    return false
+  end
+  local roster = ns.GetRosterMap()
+  local rosterCount = 0
+  for _ in pairs(roster) do
+    rosterCount = rosterCount + 1
+  end
+  local memberCount = 0
+  for _, group in ipairs(order.groups) do
+    memberCount = memberCount + #group.members
+  end
+  if rosterCount <= 1 and memberCount > 1 then
+    return false
+  end
+  local expected = (GetNumGroupMembers and GetNumGroupMembers()) or 0
+  if expected > rosterCount + 1 then
+    return false
+  end
+  local changed = false
+  for _, group in ipairs(order.groups) do
+    local i = 1
+    while i <= #group.members do
+      local member = group.members[i]
+      local row = roster[ns.NameKey(member.fullName)]
+      if not row then
+        table.remove(group.members, i)
+        changed = true
+      else
+        member.classFile = row.classFile or member.classFile
+        if row.kick then
+          member.spell = row.kick.spell or member.spell
+          member.spellID = row.kick.spellID or member.spellID
+          member.cooldown = row.kick.cooldown or member.cooldown
+        end
+        i = i + 1
+      end
+    end
+    if group.nextIndex > math.max(1, #group.members) then
+      group.nextIndex = 1
+      changed = true
+    end
+  end
+  if changed then
+    if ns.IsLeaderOrAssist() then
+      order.seq = (order.seq or 0) + 1
+      order.author = ns.PlayerFullName()
+      order.version = ns.VERSION
+    end
+    PersistOrder()
+  end
+  return changed
 end
 
 local function NextIndexAfter(group, from)
@@ -552,6 +666,7 @@ function ns.ApplyRemoteOrder(body, seq, sender)
     end
   end
   order = newOrder
+  ns._lastAppliedOrder = ns.Now()
   PersistOrder()
   if ns.RefreshAllUI then
     ns.RefreshAllUI()

@@ -2,7 +2,7 @@
 ## Title: Kardgaz's Kick & Boss Notes
 ## Notes: Party and raid interrupt assignments, plus role-aware raid, dungeon, and delve boss notes. Display only.
 ## Author: Kardgaz
-## Version: 1.1.1
+## Version: 1.2.0
 ## SavedVariables: KickBossNotesDB
 ## IconTexture: Interface\Icons\Ability_Kick
 ## AddonCompartmentFunc: KickBossNotes_OnAddonCompartmentClick

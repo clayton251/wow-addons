@@ -10,7 +10,7 @@ _G.KickBossNotes = ns
 
 ns.ADDON_NAME = ADDON
 ns.TITLE = "Kardgaz's Kick & Boss Notes"
-ns.VERSION = "1.1.1"
+ns.VERSION = "1.2.0"
 ns.PROTO = 1
 ns.PREFIX = "KBNKICK"
 
@@ -24,6 +24,7 @@ local defaults = {
   config = { point = "CENTER", x = 0, y = 0 },
   autoShowNotes = true,
   showBar = true,
+  autoClearOnDisband = true,
   customNotes = {},
   lastOrder = nil,
 }
@@ -128,6 +129,33 @@ function ns.IsInInstanceGroup()
     return IsInGroup(inst) and true or false
   end
   return false
+end
+
+-- True if the player is in any party or raid, home or instance.
+-- Party-to-raid conversion and entering an instance keep this true.
+function ns.InAnyGroup()
+  if IsInGroup then
+    if IsInGroup() then
+      return true
+    end
+    local home = (Enum and Enum.PartyCategory and Enum.PartyCategory.Home) or LE_PARTY_CATEGORY_HOME
+    local inst = ns.PartyCategoryInstance()
+    if home and IsInGroup(home) then
+      return true
+    end
+    if inst and IsInGroup(inst) then
+      return true
+    end
+  end
+  if IsInRaid and IsInRaid() then
+    return true
+  end
+  return false
+end
+
+function ns.AutoClearOnDisbandEnabled()
+  local d = db or ns.DB()
+  return not d or d.autoClearOnDisband ~= false
 end
 
 function ns.AddonChannel()
@@ -418,7 +446,7 @@ end
 local SLASH_HELP = [[
 /kbn or /kicknotes — toggle the main window
 /kbn help — this list
-/kbn config — options (scale, lock, auto-show notes)
+/kbn config — options (scale, lock, auto-show notes, auto-clear on disband)
 /kbn notes — show or hide the boss notes panel
 /kbn bar — show or hide the kick assignment bar
 /kbn lock — lock or unlock movable frames
@@ -529,6 +557,14 @@ eventFrame:SetScript("OnEvent", function(_, event, ...)
     if ns.OnRosterUpdate then
       ns.OnRosterUpdate()
     end
+  elseif event == "GROUP_LEFT" then
+    if ns.OnGroupLeft then
+      ns.OnGroupLeft(...)
+    end
+  elseif event == "GROUP_JOINED" then
+    if ns.OnGroupJoined then
+      ns.OnGroupJoined(...)
+    end
   elseif event == "PLAYER_SPECIALIZATION_CHANGED" or event == "PLAYER_ROLES_ASSIGNED" then
     if ns.OnSpecOrRoleChanged then
       ns.OnSpecOrRoleChanged()
@@ -576,6 +612,11 @@ eventFrame:RegisterEvent("ADDON_LOADED")
 eventFrame:RegisterEvent("PLAYER_LOGIN")
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
 eventFrame:RegisterEvent("GROUP_ROSTER_UPDATE")
+-- GROUP_JOINED / GROUP_LEFT exist on retail; pcall in case a client build omits them.
+pcall(function()
+  eventFrame:RegisterEvent("GROUP_LEFT")
+  eventFrame:RegisterEvent("GROUP_JOINED")
+end)
 eventFrame:RegisterEvent("PLAYER_SPECIALIZATION_CHANGED")
 eventFrame:RegisterEvent("PLAYER_ROLES_ASSIGNED")
 eventFrame:RegisterEvent("CHAT_MSG_ADDON")
