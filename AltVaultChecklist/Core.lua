@@ -7,7 +7,7 @@ local ADDON, ns = ...
 _G.AltVaultChecklist = ns
 
 ns.ADDON_NAME = ADDON
-ns.VERSION = "2.1.0"
+ns.VERSION = "2.1.1"
 -- US weekly reset is Tuesday 15:00 UTC (10:00 AM America/New_York while EST).
 -- The game API C_DateAndTime.GetSecondsUntilWeeklyReset already uses the
 -- player's region, so we do not hard-code the clock for the countdown.

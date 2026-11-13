@@ -1,8 +1,8 @@
 ## Interface: 120105
 ## Title: Alt Vault Checklist
 ## Notes: Account-wide Mythic+ key, Great Vault, weekly, and BiS gear checklists, plus a party key board. Registers each character you log in on.
-## Author: Clayton
-## Version: 2.1.0
+## Author: Kardgaz
+## Version: 2.1.1
 ## SavedVariables: AltVaultChecklistDB
 ## IconTexture: Interface\Icons\INV_Relics_Hourglass
 ## AddonCompartmentFunc: AltVaultChecklist_OnAddonCompartmentClick

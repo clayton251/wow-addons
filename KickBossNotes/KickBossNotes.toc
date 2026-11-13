@@ -1,8 +1,8 @@
 ## Interface: 120105
-## Title: Clayton's Kick & Boss Notes
+## Title: Kardgaz's Kick & Boss Notes
 ## Notes: Party and raid interrupt assignments, plus role-aware raid, dungeon, and delve boss notes. Display only.
-## Author: Clayton
-## Version: 1.1.0
+## Author: Kardgaz
+## Version: 1.1.1
 ## SavedVariables: KickBossNotesDB
 ## IconTexture: Interface\Icons\Ability_Kick
 ## AddonCompartmentFunc: KickBossNotes_OnAddonCompartmentClick
