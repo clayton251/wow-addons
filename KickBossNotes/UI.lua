@@ -7,7 +7,11 @@ local ADDON, ns = ...
 
 local BAR_W, BAR_H = 360, 150
 local NOTES_W, NOTES_H = 420, 420
-local CFG_W, CFG_H = 880, 580
+local CFG_W, CFG_H = 880, 620
+-- Title sits at y=-14. Tabs (24px) go just under the title. Page content
+-- (hints, roster, options) starts below the tab row so nothing overlaps.
+local TAB_Y = -40
+local PAGE_CONTENT_Y = -74
 local GOLD = { 1, 0.82, 0 }
 local BACKDROP = {
   bgFile = "Interface\\Buttons\\WHITE8X8",
@@ -762,15 +766,18 @@ local function BuildAssignPage(parent)
   pages.assign = page
 
   local hint = Font(page, 11)
-  hint:SetPoint("TOPLEFT", 16, -46)
-  hint:SetPoint("TOPRIGHT", -16, -46)
+  hint:SetPoint("TOPLEFT", 16, PAGE_CONTENT_Y)
+  hint:SetPoint("TOPRIGHT", -16, PAGE_CONTENT_Y)
+  hint:SetJustifyH("LEFT")
+  hint:SetJustifyV("TOP")
+  hint:SetHeight(32)
   hint:SetTextColor(0.8, 0.8, 0.8)
   page.hint = hint
 
-  -- Roster
+  -- Roster (below the two-line hint)
   local rosterFrame = CreateFrame("Frame", nil, page, "BackdropTemplate")
-  rosterFrame:SetPoint("TOPLEFT", 16, -70)
-  rosterFrame:SetSize(340, 420)
+  rosterFrame:SetPoint("TOPLEFT", 16, PAGE_CONTENT_Y - 36)
+  rosterFrame:SetSize(340, 396)
   Skin(rosterFrame, 0.08, 0.08, 0.1, 0.9)
   local rt = Font(rosterFrame, 12)
   rt:SetPoint("TOPLEFT", 8, -8)
@@ -989,8 +996,10 @@ local function BuildNotesPage(parent)
   page:SetAllPoints()
   pages.notes = page
   local hint = Font(page, 12)
-  hint:SetPoint("TOPLEFT", 20, -60)
+  hint:SetPoint("TOPLEFT", 20, PAGE_CONTENT_Y)
   hint:SetWidth(820)
+  hint:SetJustifyH("LEFT")
+  hint:SetJustifyV("TOP")
   hint:SetText("The notes panel can also be opened from the kick bar or with /kbn notes. It pops up when a boss encounter starts (if the name is not hidden by Midnight) or when you target a boss out of a restricted instance. Use Browse to open any boss by hand.")
   hint:SetTextColor(0.85, 0.85, 0.8)
   local open = Button(page, "Open notes panel", 160, 24, function()
@@ -999,7 +1008,7 @@ local function BuildNotesPage(parent)
       ns.RefreshNotes()
     end
   end)
-  open:SetPoint("TOPLEFT", 20, -130)
+  open:SetPoint("TOPLEFT", 20, PAGE_CONTENT_Y - 70)
 end
 
 local function BuildOptionsPage(parent)
@@ -1007,7 +1016,7 @@ local function BuildOptionsPage(parent)
   page:SetAllPoints()
   pages.options = page
 
-  local y = -70
+  local y = PAGE_CONTENT_Y
   local function Check(label, getter, setter)
     local c = CreateFrame("CheckButton", nil, page, "UICheckButtonTemplate")
     c:SetPoint("TOPLEFT", 24, y)
@@ -1053,6 +1062,16 @@ local function BuildOptionsPage(parent)
     local db = ns.DB()
     if db then
       db.autoShowNotes = val and true or false
+    end
+  end)
+
+  Check("Auto-clear kick list when the group disbands", function()
+    local db = ns.DB()
+    return not db or db.autoClearOnDisband ~= false
+  end, function(val)
+    local db = ns.DB()
+    if db then
+      db.autoClearOnDisband = val and true or false
     end
   end)
 
@@ -1159,7 +1178,7 @@ local function BuildConfig()
     local tab = Button(config, def.label, 90, 24, function()
       ShowTab(def.key)
     end)
-    tab:SetPoint("TOPLEFT", 16 + (i - 1) * 96, -40)
+    tab:SetPoint("TOPLEFT", 16 + (i - 1) * 96, TAB_Y)
     tabs[def.key] = tab
   end
 

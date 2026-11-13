@@ -1,4 +1,4 @@
-Kardgaz's Kick & Boss Notes  v1.1.1
+Kardgaz's Kick & Boss Notes  v1.2.0
 ===================================
 
 Display-only World of Warcraft addon for Midnight (patch 12.1.5, interface
@@ -65,7 +65,18 @@ PARTY, RAID, or INSTANCE_CHAT, whichever matches your group.
 
 Each shared order has a sequence number. The highest number wins, so a
 newer share replaces an older one. Joining a group or reloading requests
-a sync. The roster shows who has the addon and which version they are on.
+a sync. The leader (or whoever holds the newest order) replies. The roster
+shows who has the addon and which version they are on.
+
+When the group or raid disbands, or you leave or are removed, the kick
+list and raid groups A/B/C are cleared automatically, the rotation pointer
+and sync sequence are reset, and any queued addon messages are dropped.
+Converting a party to a raid, or moving between a home group and an
+instance group, does not clear the list. Members who leave a still-active
+group are pruned from the rotation; if you are the leader or an assistant,
+the updated order is shared. This auto-clear is on by default and can be
+toggled in /kbn config ("Auto-clear kick list when the group disbands").
+Boss notes and window settings are not affected.
 
 Blizzard blocks addon messages — and often regular chat — during a boss
 encounter and during a Mythic+ run (and in PvP matches). This addon does
@@ -127,7 +138,8 @@ Commands
 --------
 /kbn  or  /kicknotes     Toggle the main window
 /kbn help                Command list
-/kbn config              Options (scale, lock, auto-show notes)
+/kbn config              Options (scale, lock, auto-show notes,
+                         auto-clear on disband)
 /kbn notes               Show or hide the notes panel
 /kbn bar                 Show or hide the kick bar
 /kbn lock                Lock or unlock movable frames
