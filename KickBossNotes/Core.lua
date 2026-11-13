@@ -10,7 +10,7 @@ _G.KickBossNotes = ns
 
 ns.ADDON_NAME = ADDON
 ns.TITLE = "Clayton's Kick & Boss Notes"
-ns.VERSION = "1.0.0"
+ns.VERSION = "1.1.0"
 ns.PROTO = 1
 ns.PREFIX = "KBNKICK"
 

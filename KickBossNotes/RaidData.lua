@@ -1,32 +1,23 @@
 --[[
-  Role-aware boss notes for the current Midnight Season 2 raid tier:
-  The Venomous Abyss (patch 12.1 / 12.1.5).
+  Midnight raid and lair boss notes, role-aware (general + Tank / Healer / DPS).
 
-  Sources (Wowhead strategy guides, fetched November 13, 2026):
-  - Raid overview: https://www.wowhead.com/guide/midnight/raids/the-venomous-abyss-overview-location-rewards-bosses
-  - Nek'zali: .../venomous-abyss-nekzali-the-soulcoiler-boss-strategy-abilities (updated 2026-08-24)
-  - Entombed Sentinels: .../venomous-abyss-entombed-sentinels-boss-strategy-abilities (2026-08-18)
-  - Lost Explorers: .../venomous-abyss-lost-explorers-boss-strategy-abilities (2026-08-18)
-  - Vashnik: .../venomous-abyss-vashnik-the-malignant-boss-strategy-abilities (2026-08-18)
-  - Sszorak: .../venomous-abyss-sszorak-boss-strategy-abilities (2026-08-26)
-  - Twin Fangs: .../venomous-abyss-twin-fangs-boss-strategy-abilities (2026-08-18)
-  - Coiled Altar: .../venomous-abyss-coiled-altar-boss-strategy-abilities (2026-08-20)
-  - Ula'tek: .../venomous-abyss-ulatek-boss-strategy-abilities (2026-10-29)
+  Covers every Midnight raid released through patch 12.1.5 / Season 2:
+  The Venomous Abyss, The Unbinding of Kith'ix, The Tidebound Grotto (lair),
+  The Voidspire, The Dreamrift, March on Quel'Danas, and Sporefall.
 
-  Coiled Altar Phase 3 bonus health (from the Wowhead hotfix article
-  discussed with Clayton): Normal Zul'jan 120% / Malacrass 38%;
-  Heroic 155% / 87%; Mythic 156% / 19% after the Race to World First
-  nerf (was 160% / 35%). Separate health pools; if one dies first the
-  other berserks (Soulbound / 500% damage increase).
+  Dummy Dome (test raid) and unreleased Season 3 encounters are omitted.
+
+  Sources (researched November 13, 2026):
+  - Wowhead Midnight raids hub (updated 2026-11-09) and individual boss guides
+  - Icy Veins / Method cheat sheets where Wowhead was thin (Chimaerus)
+  - Warcraft Wiki encounter names
 
   UNVERIFIED:
-  - Encounter journal IDs for ENCOUNTER_START were not published in the
-    guides above. Notes open from a non-secret encounter name, a target
-    name when identity is not secret, or the manual dropdown.
-  - Instance map ID for The Venomous Abyss was not confirmed on the
-    InstanceID wiki list; the raid is also matched by instance name.
-  - Minor Heroic/Mythic-only tweaks may have been hotfixed after the
-    guide dates listed above.
+  - Instance map IDs for Midnight-original raids were not on Warcraft Wiki's
+    InstanceID list at the time of writing. Raids are matched by instance name
+    from GetInstanceInfo() and by encounter name on ENCOUNTER_START.
+  - Crown of the Cosmos stage script was thin on Wowhead; those bullets are
+    marked UNVERIFIED and should be confirmed from the dungeon journal.
 ]]
 
 local ADDON, ns = ...
@@ -36,6 +27,8 @@ ns.RAIDS = {
     key = "venomous-abyss",
     name = "The Venomous Abyss",
     short = "Venomous Abyss",
+    kind = "raid",
+    season = 2,
     instanceIDs = {}, -- UNVERIFIED
     nameMatches = { "The Venomous Abyss", "Venomous Abyss" },
     bosses = {
@@ -258,16 +251,411 @@ ns.RAIDS = {
       },
     },
   },
+  {
+    key = "unbinding-of-kithix",
+    name = "The Unbinding of Kith'ix",
+    short = "Kith'ix",
+    kind = "raid",
+    season = 2,
+    instanceIDs = {}, -- UNVERIFIED: no published InstanceID found
+    nameMatches = { "The Unbinding of Kith'ix", "Unbinding of Kith'ix", "Kith'ix" },
+    bosses = {
+      {
+        name = "Kith'ix",
+        encounterNames = { "Kithix", "The Unbinding of Kith'ix" },
+        notes = {
+          general = {
+            "Phase 1 cycles until Kith'ix reaches 100 energy: kill all adds before then. Adds near the boss take 50% less damage from Commanding Presence — keep the boss away from them.",
+            "Add plan: cleave Venomous Hulk and Voidweaver together, kite Bomber Beetles, stagger their explosions (Digestive Juices stacks). All adds must be dead going into the intermission or they Dark Frenzy.",
+            "Unspeakable Horrors: if you have the purple arrow, run out, then dispel Overwhelming Fear once you are clear (the scream is fall-off).",
+            "Run through a Light's Embrace ball before Extinguish (the shockwave). Dodge Twisted Appendage slaps (3-second circles).",
+            "Intermission: stand in Liadrin's Refulgent Bulwark (the light) until her energy hits 100%. Heroic: intercept Voidscar orbs so they do not reach Liadrin.",
+            "Phase 2 at 25%: Last Light fully heals the raid and grants Luminous Grace (100% damage and healing). Lust and burn before Eightfold Eclipse (eight eclipses is a wipe). Spread for Null Gates, avoid Nullshards (4–6 Nullify stacks kill you).",
+            "Soft enrage: Liadrin becomes Exhausted (her help weakens each cycle). Hard enrage: the eighth Eclipse.",
+          },
+          tank = {
+            "One tank holds Kith'ix at the edge of the room, away from adds. The other holds the Venomous Hulk on top of the Voidweaver for cleave. Face Venom Roar away.",
+            "Swap at 1 stack of Dark Devastation. The targeted tank runs the large circle to the edge, off the raid. Heroic: the swap also drops a Voidscar pool.",
+            "During the intermission, keep your Dark Devastation circle as close as possible to the edge of Liadrin's bubble without leaving the light.",
+            "Phase 2: swap on Negation and run through a Null Gate to remove it. The explosion when it expires or is removed hits a 15-yard circle — step out of the raid.",
+          },
+          healer = {
+            "Dispel Overwhelming Fear only after the player has run out. Heal Abyssal Grasp absorbs quickly or the player is dragged into the darkness.",
+            "Digestive Juices can stack from staggered beetle explosions — pad when several go off close together.",
+            "Everyone needs Light's Embrace before Extinguish or the shockwave is massive. Phase 2 starts with a full heal; then heal through each Eclipse and Nullify ticks.",
+          },
+          dps = {
+            "Kill every add before 100 energy. Cleave Hulk plus Voidweaver; kite beetles and do not pop them all at once. Kick or stop Nightfall pressure as assigned.",
+            "Run out with Unspeakable Horrors. Grab a Light's Embrace ball. Dodge tentacle slaps.",
+            "Heroic intermission: intercept Voidscar orbs heading to Liadrin. Phase 2: lust, plant for the 100% amp, spread Null Gates, and never eat Nullshards.",
+          },
+        },
+      },
+    },
+  },
+  {
+    key = "tidebound-grotto",
+    name = "The Tidebound Grotto",
+    short = "Tidebound Grotto",
+    kind = "raid",
+    season = 2,
+    instanceIDs = {}, -- UNVERIFIED: no published InstanceID found
+    nameMatches = { "The Tidebound Grotto", "Tidebound Grotto" },
+    lair = true, -- 15-40 player lair raid, not a dungeon
+    flex = "World / Normal 30 / Heroic 30 / Mythic Flex 25",
+    bosses = {
+      {
+        name = "Nymrissa Wavecaller",
+        encounterNames = { "Nymrissa", "Wavecaller" },
+        notes = {
+          general = {
+            "Tidebound Grotto is a 15–40 player LAIR raid (not a 5-man dungeon). Counts toward the raid row of the Great Vault. Flexible Mythic is available.",
+            "Nymrissa forms an Alluring Bubble that lures Bubblefin murlocs. Kill them before they enter the bubble or they become Berserkers and pulse raid damage.",
+            "Priority: Frostscales first (Mythic — Waterfog Shield makes nearby murlocs nearly immune), then Berserkers, then Shorerunners.",
+            "Avoid Swirling Whirlpools; stand in the safe gap. Whirlpools later converge on the center.",
+            "Chilling Frost drops Frost Orbs. Move slowly so orbs clump in the same place. Heroic: soak orbs before they Shatter, but do not soak too many at once (stacking DoT). Mythic: touching an orb also Frost Bursts.",
+            "The bubble Pop! is a raid-wide hit and knockback if murlocs reached it. Lust on pull.",
+          },
+          tank = {
+            "Point Water Jet (and Iceblade Flurry on Normal/Heroic) away from the group. Water Jet also washes away Lingering Frost patches.",
+            "Each Water Jet hit stacks a 20% damage-taken debuff — taunt swap when stacks are high.",
+            "Hold Nymrissa so the raid can see incoming murloc paths and whirlpool gaps.",
+          },
+          healer = {
+            "Abyssal Rain is significant raid damage (Heroic also stacks Wavecaller's Might on the boss). Pad Rain and any Pop!.",
+            "Frost Orb DoTs and Shatter are the other big hits — call if too many players soaked at once.",
+            "Watch the tank during stacked Water Jet.",
+          },
+          dps = {
+            "Kill incoming murlocs before they reach the bubble. Frostscale > Berserker > Shorerunner.",
+            "If targeted by Chilling Frost, move slowly and drop orbs together. Help soak Heroic orbs without hoarding stacks.",
+            "Stand in the whirlpool-free gap. Do not get knocked into a whirlpool by Pop!.",
+          },
+        },
+      },
+    },
+  },
+  {
+    key = "the-voidspire",
+    name = "The Voidspire",
+    short = "Voidspire",
+    kind = "raid",
+    season = 1,
+    instanceIDs = {}, -- UNVERIFIED: no published InstanceID found
+    nameMatches = { "The Voidspire", "Voidspire" },
+    bosses = {
+      {
+        name = "Imperator Averzian",
+        notes = {
+          general = {
+            "Three add constructs start immune until they are hit by Umbral Collapse, a large group soak.",
+            "After two constructs die, the third leaves a void portal. Do not let three adjacent portals form or March of the Endless wipes the raid.",
+            "Plan which two constructs die each cycle so leftover portals are spaced apart.",
+            "Bring assigned soaks and mobility for Collapse; missed soaks leave constructs immune and stall the fight.",
+          },
+          tank = {
+            "Hold Averzian and help call which construct will eat the next Umbral Collapse.",
+            "Keep leftover portals and the boss far enough from the next soak that the raid can plant together.",
+            "Be ready to pick up constructs as they become attackable.",
+          },
+          healer = {
+            "Umbral Collapse is a heavy group soak — pad the raid before it lands.",
+            "Portal and add damage ramps if soaks are sloppy; save a cooldown for a messy Collapse.",
+            "Watch soak groups for players who miss the circle.",
+          },
+          dps = {
+            "Stack in Umbral Collapse so the assigned construct becomes attackable.",
+            "Swap immediately to the vulnerable construct and finish the two assigned kills.",
+            "Do not accidentally kill a third adjacent construct and close a three-portal setup.",
+          },
+        },
+      },
+      {
+        name = "Vorasius",
+        notes = {
+          general = {
+            "One repeating phase. Vorasius slams the floor and raises crystal walls that cut the room.",
+            "Kite Blistercreep adds into the walls to shatter them. Breaking a wall opens a Void Breath safe zone.",
+            "Damage and haste of the fight ramp with each wall set — clear quickly and do not leave adds idle.",
+            "Stay in the current safe zone once Breath windows open; later sets leave less room.",
+          },
+          tank = {
+            "Angle slams so new walls do not trap the raid against existing ones.",
+            "Kite or drag Blistercreeps toward walls when DPS cannot immediately crash them.",
+            "Hold the boss in the open safe zone after a wall breaks.",
+          },
+          healer = {
+            "Raid damage ramps each wall cycle — plan cooldowns later in the fight.",
+            "Players who miss a Void Breath safe zone take a large hit; be ready to top them.",
+            "Watch tanks when they hold Blistercreeps through a wall break.",
+          },
+          dps = {
+            "Priority: crash Blistercreeps into walls, then return to the boss.",
+            "Do not tunnel the boss while a wall is still boxing the raid out of the next Breath zone.",
+            "Move into the Void Breath safe zone as soon as the wall shatters.",
+          },
+        },
+      },
+      {
+        name = "Fallen-King Salhadaar",
+        encounterNames = { "Salhadaar", "Fallen King Salhadaar" },
+        notes = {
+          general = {
+            "Void Convergence creates Concentrated Void orbs that must be killed before they reach Salhadaar.",
+            "At 100 energy he casts Entropic Unraveling (beams). After the beams, he takes 25% increased damage for 20 seconds — this is the burn window.",
+            "Assign orb soaks or killers so no orb reaches the boss; orbs that land empower him.",
+            "Dodge Unraveling beams, then stack cooldowns in the 20-second amp.",
+          },
+          tank = {
+            "Hold Salhadaar in a place that gives orb-killers a short path and leaves beam lanes open.",
+            "Mitigate tank hits around energy 100 so you are not down as the burn starts.",
+            "Help call when orbs are leaking toward the boss.",
+          },
+          healer = {
+            "Entropic Unraveling is a heavy raid hit — pad before 100 energy.",
+            "The 20-second amp is also a healing check if beams were messy.",
+            "Watch orb-soakers who take ticks while finishing a late orb.",
+          },
+          dps = {
+            "Kill Concentrated Void orbs before they reach the boss. Assign a small group if needed.",
+            "Hold a major cooldown for the 20-second damage amp after Unraveling.",
+            "Dodge beams; a death in the amp window loses the burn.",
+          },
+        },
+      },
+      {
+        name = "Vaelgor and Ezzorak",
+        encounterNames = { "Vaelgor", "Ezzorak", "Vaelgor & Ezzorak" },
+        notes = {
+          general = {
+            "Keep damage even on Vaelgor and Ezzorak or Twilight Bond will punish the raid.",
+            "Vaelgor's Dread Breath targets players — those players run the breath out of the group.",
+            "Ezzorak's Gloom orbs should be soaked to shrink them before they become dangerous.",
+            "Intermission: Lightblind Vanguard's Radiant Barrier appears in the center — stand in it.",
+            "After the third intermission the fight enrages. Comment on Wowhead; confirm the exact enrage with your log or timer addon.",
+            "Mythic Nullbeam soaks are stricter; below Mythic they are often tank-only.",
+          },
+          tank = {
+            "Split the bosses as assigned and keep health even for Twilight Bond.",
+            "Soak Nullbeam (often tank-only on Normal and Heroic). Do not leave it for the raid unless the plan says so.",
+            "Bring both bosses to the center for the Radiant Barrier intermission, then split again.",
+          },
+          healer = {
+            "Twilight Bond and Dread Breath mistakes spike the raid — pad when health gaps open.",
+            "Gloom soaks and Nullbeam are the other big hits; watch the soaking tank.",
+            "Stand in Radiant Barrier during the intermission and top the raid before the next split.",
+          },
+          dps = {
+            "Balance damage on both bosses. Call if one is pulling ahead.",
+            "If targeted by Dread Breath, run it out. Help soak Gloom orbs to shrink them.",
+            "Stand in the center Radiant Barrier during the intermission. Plan a burn before the post-third-intermission enrage.",
+          },
+        },
+      },
+      {
+        name = "Lightblinded Vanguard",
+        encounterNames = { "Lightblood", "Bellamy", "Senn", "Lightblind Vanguard", "Lightblinded Vanguard" },
+        notes = {
+          general = {
+            "Council of Lightblood, Bellamy, and Senn. At 100 energy one of them casts Aura of Wrath, Aura of Devotion, or Aura of Peace.",
+            "Move the other two bosses out of the active aura or the raid is overwhelmed.",
+            "Paladin toolkit matters here: Consecration, Divine Shield, and Execution Sentence are commonly assigned on the auras or on the marked target. Follow your raid's call.",
+            "Watch which boss is targeting or being judged so taunts and swaps stay clean.",
+          },
+          tank = {
+            "Each tank holds an assigned council member and is ready to drag them out of a new aura.",
+            "Taunt after Judgments when the targeted tank is called. Do not leave two bosses stacked in an aura.",
+            "Call which aura just went out so the third tank or offtank can adjust.",
+          },
+          healer = {
+            "Aura windows are the raid-wide check — pad before 100 energy.",
+            "Players who stay in the wrong aura take heavy ticks. Top them or call a defensive.",
+            "Watch tanks after Judgment swaps.",
+          },
+          dps = {
+            "Help move or focus the correct target when an aura goes out, per the assignment.",
+            "Use assigned Paladin tools (Execution Sentence, Divine Shield, Consecration) when you have them.",
+            "Do not cleave a boss that is being kited out of an aura if it would pull it back in.",
+          },
+        },
+      },
+      {
+        name = "Crown of the Cosmos",
+        unverified = true,
+        encounterNames = { "Xal'atath", "Xalatath", "Crown of the Cosmos" },
+        notes = {
+          general = {
+            "Final Voidspire encounter. Three stages with intermissions: several mini-bosses plus Xal'atath, with Turalyon, Arator, and Alleria appearing as allies.",
+            "UNVERIFIED / thin public cheat-sheet: Wowhead's overview (checked 2026-11) did not list a full mechanic-by-mechanic script. Use the dungeon journal and your raid's assignment for soaks, beams, and add burns.",
+            "Plan Bloodlust for the assigned burn stage (often a later stage). Confirm timing with your raid lead.",
+            "Clear intermission adds before the next stage so raid-wides do not overlap leftover mechanics.",
+            "If a name in the journal differs, this entry also matches Xal'atath.",
+          },
+          tank = {
+            "UNVERIFIED details: pick up each stage's main target and any spawned mini-bosses immediately.",
+            "Position so the raid can soak or dodge as the journal describes, and so allies are not standing in frontals.",
+            "Call swaps if a stage applies a tank debuff — confirm in the journal.",
+          },
+          healer = {
+            "UNVERIFIED details: expect heavy raid damage at stage transitions and during intermissions.",
+            "Hold a major cooldown for each intermission until you have a feel for the damage pattern.",
+            "Watch tanks when mini-bosses spawn together.",
+          },
+          dps = {
+            "UNVERIFIED details: kill assigned mini-bosses or adds before returning to Xal'atath.",
+            "Hold major cooldowns for the called burn stage.",
+            "Dodge and soak as marked; do not skip intermission add work.",
+          },
+        },
+      },
+    },
+  },
+  {
+    key = "the-dreamrift",
+    name = "The Dreamrift",
+    short = "Dreamrift",
+    kind = "raid",
+    season = 1,
+    instanceIDs = {}, -- UNVERIFIED: no published InstanceID found
+    nameMatches = { "The Dreamrift", "Dreamrift" },
+    bosses = {
+      {
+        name = "Chimaerus",
+        encounterNames = { "Chimaerus the Undreamt God", "The Undreamt God" },
+        notes = {
+          general = {
+            "Only boss of The Dreamrift. Two stages that repeat until Chimaerus dies. Bring cleave.",
+            "Split the raid: one group soaks Alndust Upheaval into the Rift, breaks add shields, and clears pools; the other stays in Reality and kills adds before they reach Chimaerus.",
+            "Add priority: Colossal Horror first, interrupt Haunting Essence's Fearsome Cry, cleave Swarming Shades.",
+            "At 100 energy, avoid Corrupted Devastation and kill the spawned adds before Ravenous Dive, then the cycle repeats.",
+            "Mythic: Dissonance separates realms and Rift Madness can swap players between them. Assign stable Reality and Rift teams.",
+          },
+          tank = {
+            "One tank typically holds Chimaerus in Reality; the other covers large adds (Colossal Horror) or the Rift team as assigned.",
+            "Face frontals away from the soak group and keep the boss off freshly dropped pools.",
+            "Help collapse add packs so Reality never lets a living add reach the boss.",
+          },
+          healer = {
+            "Alndust Upheaval soaks and Corrupted Devastation are the big raid hits — pad those windows.",
+            "Cover both realms on Mythic; a Rift team that falls behind needs external help.",
+            "Top players who soak or who get caught in pools after a shield break.",
+          },
+          dps = {
+            "Know whether you are Reality or Rift. Reality: kill adds instantly. Rift: soak Upheaval, break shields, clear pools.",
+            "Kick Fearsome Cry on Haunting Essences. Prioritize Colossal Horror over small shades.",
+            "At 100 energy, dodge Corrupted Devastation and burn the new adds before Ravenous Dive.",
+          },
+        },
+      },
+    },
+  },
+  {
+    key = "march-on-queldanas",
+    name = "March on Quel'Danas",
+    short = "Quel'Danas",
+    kind = "raid",
+    season = 1,
+    instanceIDs = {}, -- UNVERIFIED: no published InstanceID found
+    nameMatches = { "March on Quel'Danas", "March on Quel'Danas", "Quel'Danas" },
+    bosses = {
+      {
+        name = "Belo'ren",
+        encounterNames = { "Beloren", "Belo'ren, Child of Al'ar", "Child of Al'ar" },
+        notes = {
+          general = {
+            "The raid is split at the start into Light Feather and Void Feather teams. You can only interact with mechanics that match your feather color.",
+            "Do not soak, pick up, or stand in the opposite color. Call if a player was given the wrong side for the assignment.",
+            "When Belo'ren reaches 0 HP, a Rebirth egg appears in the center. The egg is the boss's real health.",
+            "The fight repeats body and egg stages until the egg dies. Lust and major cooldowns on the egg.",
+            "Stay in your color lane through every repeat so the egg burn is not delayed by a wipe on the body.",
+          },
+          tank = {
+            "Hold Belo'ren so both color teams have a clean path to their own mechanics.",
+            "Be ready to taunt or reposition as soon as the egg forms so DPS can plant.",
+            "Do not drag the boss through the opposite color's soaks.",
+          },
+          healer = {
+            "Heal your color's soaks; opposite-color hits are usually avoidable and very expensive.",
+            "The egg spawn is a burn and a healing check if the last body phase was messy — top the raid as the egg forms.",
+            "Watch feather teams independently if they split far apart.",
+          },
+          dps = {
+            "Only interact with your feather color. Save Bloodlust and major cooldowns for the Rebirth egg.",
+            "Plant on the egg as soon as it spawns; that is the true health bar.",
+            "If you are the wrong color for a soak, do not 'help' — you cannot interact and will usually fail it.",
+          },
+        },
+      },
+      {
+        name = "Midnight Falls",
+        encounterNames = { "L'ura", "Lura", "Midnight Falls" },
+        notes = {
+          general = {
+            "L'ura. Three phases, with an intermission between Phase 1 and Phase 2.",
+            "Phase 1 includes a memory-style Death's Dirge pattern and dodging Heaven's Glaives.",
+            "Dawn Crystals protect players from dark abilities — stand in or use them when those hits go out.",
+            "Interrupt Safeguard Matrices. Burst Midnight Crystals when they spawn so they do not overwhelm the raid.",
+            "Intermission and later phases repeat these rules with tighter timing. Follow the journal if a later-phase name differs.",
+          },
+          tank = {
+            "Hold L'ura in a place that leaves the raid room to dodge Glaives and stand in Dawn Crystals.",
+            "Pick up Matrix or crystal-related adds immediately so kickers can reach them.",
+            "Be ready to move the boss after the intermission into the Phase 2 position.",
+          },
+          healer = {
+            "Heaven's Glaives and missed Dirge patterns spike the raid. Pad those windows.",
+            "Players outside Dawn Crystals during dark hits need instant help.",
+            "The intermission is a good time to top the raid and reset cooldowns.",
+          },
+          dps = {
+            "Kick Safeguard Matrices every time. Swap to Midnight Crystals and burn them.",
+            "Watch Death's Dirge and repeat the safe pattern. Dodge Heaven's Glaives; do not bait them through the raid.",
+            "Use Dawn Crystals when dark abilities are called.",
+          },
+        },
+      },
+    },
+  },
+  {
+    key = "sporefall",
+    name = "Sporefall",
+    short = "Sporefall",
+    kind = "raid",
+    season = 1,
+    instanceIDs = {}, -- UNVERIFIED: no published InstanceID found
+    nameMatches = { "Sporefall" },
+    flex = "Mythic Flex 15-25",
+    bosses = {
+      {
+        name = "Rotmire",
+        notes = {
+          general = {
+            "Only boss of Sporefall (Mythic Flex, 15–25). Awaken Fungi spawns minions — do not stand in their explode zones.",
+            "At 100 energy, Fungal Bloom is huge raid damage, heals and enrages minions, and turns corpses into Bursting Shrooms. Kill or CC adds and clear corpses before Bloom.",
+            "Festering Vines is followed by Writhing Vines puddles — move the boss and the raid out of the mess.",
+            "Bursting Pustules apply stacking Rotting Pustules as a raid DoT. Plan healing and defensive windows around it.",
+            "Mythic: if a Shroomling and a Fungling corpse die within 10 yards, Cross Fertilization creates a Doom Shroom. Separate those deaths.",
+          },
+          tank = {
+            "Mitigate Putrid Fist. Face the boss away from vine puddles and leftover corpses.",
+            "Help drag adds or the boss so Shroomling and Fungling corpses are not within 10 yards on Mythic.",
+            "Call when energy is close to 100 so DPS can finish leftover minions before Bloom.",
+          },
+          healer = {
+            "Fungal Bloom and Rotting Pustules are the major raid checks. Pre-load HoTs and a cooldown for Bloom.",
+            "Players standing in explode zones or vine puddles will spike — call them out.",
+            "Dispel or cleanse whatever the journal lists if a Pustule variant is dispellable; otherwise heal through the stack.",
+          },
+          dps = {
+            "Cleave and CC minions. Corpses must be cleared before Fungal Bloom or they become Bursting Shrooms.",
+            "Do not stand in explode circles or Writhing Vines. On Mythic, stagger Shroomling and Fungling deaths so they are not within 10 yards.",
+            "Use a personal at Bloom if you are still dropping a late add.",
+          },
+        },
+      },
+    },
+  },
 }
-
-local function NamesEqual(a, b)
-  if not a or not b then
-    return false
-  end
-  a = string.lower((a:gsub("%s+", " "):gsub("^%s+", ""):gsub("%s+$", "")))
-  b = string.lower((b:gsub("%s+", " "):gsub("^%s+", ""):gsub("%s+$", "")))
-  return a == b or a:find(b, 1, true) or b:find(a, 1, true)
-end
 
 function ns.FindRaidByInstance(instanceID, instanceName)
   if instanceID then
@@ -279,68 +667,17 @@ function ns.FindRaidByInstance(instanceID, instanceName)
       end
     end
   end
-  if instanceName then
+  if type(instanceName) == "string" and instanceName ~= "" then
     for _, raid in ipairs(ns.RAIDS) do
-      if NamesEqual(raid.name, instanceName) then
+      if ns.NamesEqual and ns.NamesEqual(raid.name, instanceName) then
         return raid
       end
       for _, alias in ipairs(raid.nameMatches or {}) do
-        if NamesEqual(alias, instanceName) then
+        if ns.NamesEqual and ns.NamesEqual(alias, instanceName) then
           return raid
         end
       end
     end
   end
   return nil
-end
-
-function ns.FindBoss(name)
-  if type(name) ~= "string" or name == "" then
-    return nil, nil
-  end
-  for _, raid in ipairs(ns.RAIDS) do
-    for _, boss in ipairs(raid.bosses or {}) do
-      if NamesEqual(boss.name, name) then
-        return boss, raid
-      end
-      for _, alias in ipairs(boss.encounterNames or {}) do
-        if NamesEqual(alias, name) then
-          return boss, raid
-        end
-      end
-    end
-  end
-  -- Dungeon bosses
-  for _, dungeon in ipairs(ns.DUNGEONS or {}) do
-    for _, boss in ipairs(dungeon.bosses or {}) do
-      if NamesEqual(boss.name, name) then
-        return boss, dungeon
-      end
-    end
-  end
-  return nil, nil
-end
-
-function ns.AllBossEntries()
-  local list = {}
-  for _, raid in ipairs(ns.RAIDS or {}) do
-    for _, boss in ipairs(raid.bosses or {}) do
-      list[#list + 1] = { boss = boss, parent = raid, kind = "raid" }
-    end
-  end
-  for _, dungeon in ipairs(ns.DUNGEONS or {}) do
-    for _, boss in ipairs(dungeon.bosses or {}) do
-      list[#list + 1] = { boss = boss, parent = dungeon, kind = "dungeon" }
-    end
-  end
-  return list
-end
-
-function ns.BossKey(boss, parent)
-  if not boss then
-    return nil
-  end
-  local pk = parent and parent.key or "unknown"
-  local bk = boss.key or (boss.name and boss.name:lower():gsub("%s+", "-")) or "boss"
-  return pk .. ":" .. bk
 end

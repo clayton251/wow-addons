@@ -1,8 +1,8 @@
 ## Interface: 120105
 ## Title: Clayton's Kick & Boss Notes
-## Notes: Party and raid interrupt assignments, plus role-aware raid and dungeon boss notes. Display only.
+## Notes: Party and raid interrupt assignments, plus role-aware raid, dungeon, and delve boss notes. Display only.
 ## Author: Clayton
-## Version: 1.0.0
+## Version: 1.1.0
 ## SavedVariables: KickBossNotesDB
 ## IconTexture: Interface\Icons\Ability_Kick
 ## AddonCompartmentFunc: KickBossNotes_OnAddonCompartmentClick
@@ -15,6 +15,8 @@ Core.lua
 Interrupts.lua
 DungeonData.lua
 RaidData.lua
+DelveData.lua
+NotesIndex.lua
 Comm.lua
 KickAssign.lua
 UI.lua

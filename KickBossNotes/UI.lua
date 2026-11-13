@@ -344,18 +344,29 @@ local function BuildNotes()
   end)
   notes.close:SetPoint("TOPRIGHT", -8, -8)
 
-  notes.picker = Button(notes, "Browse bosses...", 200, 22, function()
+  notes.picker = Button(notes, "Browse bosses...", 240, 22, function()
     ns.ToggleBossPicker()
   end)
   notes.picker:SetPoint("TOPLEFT", 12, -34)
 
   notes.pickerMenu = CreateFrame("Frame", nil, notes, "BackdropTemplate")
   notes.pickerMenu:SetPoint("TOPLEFT", notes.picker, "BOTTOMLEFT", 0, -2)
-  notes.pickerMenu:SetSize(300, 280)
+  notes.pickerMenu:SetSize(360, 340)
   Skin(notes.pickerMenu, 0.08, 0.08, 0.1, 0.98)
   notes.pickerMenu:SetFrameStrata("DIALOG")
+  notes.pickerMenu:SetFrameLevel(notes:GetFrameLevel() + 20)
   notes.pickerMenu:Hide()
   notes.pickerMenu.buttons = {}
+  notes.pickerMenu.headers = {}
+
+  local pScroll = CreateFrame("ScrollFrame", "KickBossNotesPickerScroll", notes.pickerMenu, "UIPanelScrollFrameTemplate")
+  pScroll:SetPoint("TOPLEFT", 6, -6)
+  pScroll:SetPoint("BOTTOMRIGHT", -28, 6)
+  notes.pickerMenu.scroll = pScroll
+  local pChild = CreateFrame("Frame", nil, pScroll)
+  pChild:SetSize(320, 20)
+  pScroll:SetScrollChild(pChild)
+  notes.pickerMenu.child = pChild
 
   local scroll = CreateFrame("ScrollFrame", "KickBossNotesScroll", notes, "UIPanelScrollFrameTemplate")
   scroll:SetPoint("TOPLEFT", 12, -64)
@@ -426,21 +437,61 @@ function ns.RefreshNotes()
   if not boss then
     notes.title:SetText("Boss Notes")
     notes.picker:SetText("Browse bosses...")
-    local dungeon = ns.GetCurrentDungeon()
+    local parent, pkind
+    if ns.GetCurrentNotesParent then
+      parent, pkind = ns.GetCurrentNotesParent()
+    else
+      parent = ns.GetCurrentDungeon and ns.GetCurrentDungeon() or nil
+      pkind = parent and "dungeon" or nil
+    end
     local text = "|cffffd100Select a boss, or target one when names are available.|r\n\n"
-    if dungeon then
-      text = text .. "|cffffd100" .. dungeon.name .. " — kick priorities|r\n"
-      for _, kick in ipairs(dungeon.kicks or {}) do
-        text = text .. string.format("  • [%s] %s — %s (%s)\n", kick.priority, kick.spell, kick.caster, kick.note or "")
+    if pkind == "dungeon" and parent then
+      text = text .. "|cffffd100" .. parent.name .. " — kick priorities|r\n"
+      if parent.kicks and #parent.kicks > 0 then
+        for _, kick in ipairs(parent.kicks) do
+          text = text .. string.format("  • [%s] %s — %s (%s)\n", kick.priority, kick.spell, kick.caster, kick.note or "")
+        end
+      else
+        text = text .. "  • No Orboro interrupt sheet for this dungeon (not in the current Season 2 M+ pool). Use the journal.\n"
       end
-      if dungeon.extras then
+      if parent.extras then
         text = text .. "\n|cffffd100Also|r\n"
-        for _, extra in ipairs(dungeon.extras) do
+        for _, extra in ipairs(parent.extras) do
           text = text .. "  • " .. extra .. "\n"
         end
       end
+      text = text .. "\n|cffffd100Bosses|r\n"
+      for _, b in ipairs(parent.bosses or {}) do
+        text = text .. "  • " .. b.name .. "\n"
+      end
+    elseif pkind == "delve" and parent then
+      text = text .. "|cffffd100" .. parent.name .. " — delve|r\n"
+      text = text .. "  • Midnight companion is Valeera Sanguinar (not Brann). Set her to Tank, Healer, or DPS before the pull.\n"
+      if parent.nemesis then
+        text = text .. "  • Nemesis delve. Open the end-boss note from the list below or by targeting the boss.\n"
+      end
+      if parent.megadelve then
+        text = text .. "  • Megadelve: clear chambers, then challenge the end boss on Tier 8+ when unlocked.\n"
+      end
+      text = text .. "\n|cffffd100Possible end bosses (story variants included)|r\n"
+      for _, b in ipairs(parent.bosses or {}) do
+        local tag = b.unverified and " |cff888888(unverified)|r" or ""
+        local prim = b.primary and " |cffaaaaaa(common end)|r" or ""
+        text = text .. "  • " .. b.name .. prim .. tag .. "\n"
+      end
+      text = text .. "\nTarget the boss when the name is readable, or pick one from Browse. Names are often secret inside instances, so the dropdown is the reliable fallback."
+    elseif pkind == "raid" and parent then
+      text = text .. "|cffffd100" .. parent.name .. "|r\n"
+      if parent.lair then
+        text = text .. "  • This is a lair raid, not a 5-man dungeon. It counts toward the raid vault row.\n\n"
+      end
+      text = text .. "|cffffd100Bosses|r\n"
+      for _, b in ipairs(parent.bosses or {}) do
+        text = text .. "  • " .. b.name .. "\n"
+      end
+      text = text .. "\nNotes auto-open on ENCOUNTER_START or when you target a boss and the name is readable."
     else
-      text = text .. "When you zone into a Season 2 dungeon, that dungeon's interrupt list appears here automatically."
+      text = text .. "Browse Raids, Dungeons, or Delves from the dropdown. Notes auto-open on ENCOUNTER_START or a matching target name. Delves also match the instance name when it is readable."
     end
     notes.body:SetText(text)
     notes.bodyFrame:SetHeight(math.max(200, notes.body:GetStringHeight() + 20))
@@ -458,12 +509,23 @@ function ns.RefreshNotes()
     -- Brief dungeon boss notes plus the dungeon kick list.
     parts[#parts + 1] = BulletBlock("General", n.general)
     parts[#parts + 1] = BulletBlock(ns.RoleLabel(role), role == "TANK" and n.tank or (role == "HEALER" and n.healer or n.dps))
-    if parent and parent.kicks then
+    if parent and parent.kicks and #parent.kicks > 0 then
       local kicks = {}
       for _, kick in ipairs(parent.kicks) do
         kicks[#kicks + 1] = string.format("[%s] %s — %s. %s", kick.priority, kick.spell, kick.caster, kick.note or "")
       end
       parts[#parts + 1] = BulletBlock("Dungeon kick priorities", kicks)
+    end
+  elseif kind == "delve" then
+    parts[#parts + 1] = BulletBlock("General", n.general)
+    parts[#parts + 1] = BulletBlock("Solo / small group", n.solo)
+    -- Role bullets are optional on delves; show them if present.
+    if role == "TANK" and n.tank then
+      parts[#parts + 1] = BulletBlock("Tank", n.tank)
+    elseif role == "HEALER" and n.healer then
+      parts[#parts + 1] = BulletBlock("Healer", n.healer)
+    elseif n.dps and role ~= "TANK" and role ~= "HEALER" then
+      parts[#parts + 1] = BulletBlock("DPS", n.dps)
     end
   else
     parts[#parts + 1] = BulletBlock("General", n.general)
@@ -474,7 +536,6 @@ function ns.RefreshNotes()
     else
       parts[#parts + 1] = BulletBlock("DPS", n.dps)
     end
-    -- Offer the other roles as a shorter reference at the bottom? Keep it tight: only current role + general.
   end
   local custom = ns.CustomNote(notesState.key)
   if custom and custom ~= "" then
@@ -492,15 +553,35 @@ function ns.ToggleBossPicker()
     notes.pickerMenu:Hide()
     return
   end
-  local entries = ns.AllBossEntries()
-  local y = -6
-  for i, entry in ipairs(entries) do
-    local b = notes.pickerMenu.buttons[i]
+  local child = notes.pickerMenu.child or notes.pickerMenu
+  local catalog = ns.GetNotesCatalog and ns.GetNotesCatalog() or {}
+  local y = -2
+  local bi, hi = 0, 0
+
+  local function header(label, color, indent)
+    hi = hi + 1
+    local h = notes.pickerMenu.headers[hi]
+    if not h then
+      h = child:CreateFontString(nil, "OVERLAY", "GameFontNormal")
+      h:SetFont((GameFontNormal:GetFont()), 11)
+      h:SetJustifyH("LEFT")
+      notes.pickerMenu.headers[hi] = h
+    end
+    h:ClearAllPoints()
+    h:SetPoint("TOPLEFT", child, "TOPLEFT", indent or 4, y)
+    h:SetPoint("RIGHT", child, "RIGHT", -4, 0)
+    h:SetText((color or "|cffffd100") .. label .. "|r")
+    h:SetTextColor(1, 0.82, 0)
+    h:Show()
+    y = y - 18
+  end
+
+  local function row(entry, indent, label)
+    bi = bi + 1
+    local b = notes.pickerMenu.buttons[bi]
     if not b then
-      b = CreateFrame("Button", nil, notes.pickerMenu)
+      b = CreateFrame("Button", nil, child)
       b:SetHeight(18)
-      b:SetPoint("LEFT", 6, 0)
-      b:SetPoint("RIGHT", -6, 0)
       b.text = Font(b, 11)
       b.text:SetPoint("LEFT", 2, 0)
       b.text:SetTextColor(1, 1, 1)
@@ -509,21 +590,46 @@ function ns.ToggleBossPicker()
         SetNotesContent(self.entry.boss, self.entry.parent, self.entry.kind)
         notes.pickerMenu:Hide()
       end)
-      notes.pickerMenu.buttons[i] = b
+      notes.pickerMenu.buttons[bi] = b
     end
     b.entry = entry
-    local prefix = entry.kind == "raid" and "|cffff8040Raid|r  " or "|cff80c0ffM+|r  "
-    b.text:SetText(prefix .. entry.boss.name .. "  |cff888888" .. (entry.parent.name or "") .. "|r")
+    b.text:SetText(label)
     b:ClearAllPoints()
-    b:SetPoint("TOPLEFT", 6, y)
-    b:SetPoint("TOPRIGHT", -6, y)
+    b:SetPoint("TOPLEFT", child, "TOPLEFT", indent or 16, y)
+    b:SetPoint("TOPRIGHT", child, "TOPRIGHT", -4, y)
     b:Show()
     y = y - 18
   end
-  for i = #entries + 1, #notes.pickerMenu.buttons do
+
+  for _, cat in ipairs(catalog) do
+    header(cat.title, cat.color, 4)
+    for _, parent in ipairs(cat.lists or {}) do
+      local extra = ""
+      if parent.lair then
+        extra = "  |cff888888(lair)|r"
+      elseif parent.nemesis then
+        extra = "  |cff888888(nemesis)|r"
+      elseif parent.megadelve then
+        extra = "  |cff888888(megadelve)|r"
+      end
+      header(parent.name .. extra, "|cffdddddd", 12)
+      for _, boss in ipairs(parent.bosses or {}) do
+        local tag = ""
+        if boss.unverified then
+          tag = "  |cff888888(unverified)|r"
+        end
+        row({ boss = boss, parent = parent, kind = parent.kind or cat.kind }, 22, boss.name .. tag)
+      end
+    end
+  end
+
+  for i = bi + 1, #notes.pickerMenu.buttons do
     notes.pickerMenu.buttons[i]:Hide()
   end
-  notes.pickerMenu:SetHeight(math.min(300, 12 + #entries * 18))
+  for i = hi + 1, #notes.pickerMenu.headers do
+    notes.pickerMenu.headers[i]:Hide()
+  end
+  child:SetHeight(math.max(20, -y + 8))
   notes.pickerMenu:Show()
 end
 
@@ -533,15 +639,48 @@ function ns.ShowBossNotes(name, auto)
     return false
   end
   local kind = "raid"
-  for _, dungeon in ipairs(ns.DUNGEONS or {}) do
-    if parent == dungeon then
-      kind = "dungeon"
-      break
+  if ns.ParentKind then
+    kind = ns.ParentKind(parent)
+  else
+    for _, dungeon in ipairs(ns.DUNGEONS or {}) do
+      if parent == dungeon then
+        kind = "dungeon"
+        break
+      end
     end
   end
   SetNotesContent(boss, parent, kind)
   notes:Show()
   return true
+end
+
+function ns.TryAutoShowInstanceNotes()
+  if not notes then
+    return
+  end
+  local db = ns.DB()
+  if not db or db.autoShowNotes == false then
+    return
+  end
+  if not ns.GetCurrentNotesParent then
+    return
+  end
+  local parent, kind = ns.GetCurrentNotesParent()
+  -- Delves: match by instance name when it is readable, even if the
+  -- end boss is not targeted yet. Raids and dungeons still wait for
+  -- ENCOUNTER_START or a matching unit name.
+  if kind == "delve" and parent then
+    if notesState.parent ~= parent or not notes:IsShown() then
+      notesState.boss = nil
+      notesState.parent = parent
+      notesState.kind = "delve"
+      notesState.key = nil
+      ns.RefreshNotes()
+      notes:Show()
+    end
+  elseif notes:IsShown() then
+    ns.RefreshNotes()
+  end
 end
 
 function ns.ShowNotes()
@@ -1196,4 +1335,29 @@ function ns.InitUI()
   BuildMinimap()
   ns.ApplyFramePositions()
   ns.RefreshBar()
+end
+
+
+-- Auto-show delve notes on instance name, and refresh an already-open
+-- notes panel when the zone changes. Wrap after Comm.lua's handlers.
+do
+  local prevEnter = ns.OnEnteringWorld
+  function ns.OnEnteringWorld(...)
+    if prevEnter then
+      prevEnter(...)
+    end
+    if ns.TryAutoShowInstanceNotes then
+      ns.TryAutoShowInstanceNotes()
+    end
+  end
+
+  local prevZone = ns.OnZoneChanged
+  function ns.OnZoneChanged(...)
+    if prevZone then
+      prevZone(...)
+    end
+    if ns.TryAutoShowInstanceNotes then
+      ns.TryAutoShowInstanceNotes()
+    end
+  end
 end

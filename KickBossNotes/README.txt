@@ -1,4 +1,4 @@
-Clayton's Kick & Boss Notes  v1.0.0
+Clayton's Kick & Boss Notes  v1.1.0
 ===================================
 
 Display-only World of Warcraft addon for Midnight (patch 12.1.5, interface
@@ -34,14 +34,28 @@ What you get
      kicks for you.
 
 2) Boss notes
-   - Short Tank / Healer / DPS + general notes for every boss of The
-     Venomous Abyss, including The Coiled Altar (Zul'jan and Malacrass
-     Phase 3 bonus health, separate pools, berserk if one dies first).
-   - Brief notes and a kick-priority list for every Midnight Season 2
-     Mythic+ dungeon. The list appears when you are in that dungeon.
-   - The notes panel can pop up at encounter start, or when you target the
-     boss (when the game still lets addons read the name). You can always
-     browse any boss by hand and type your own note, which is saved.
+   - Role-aware Tank / Healer / DPS + general notes (usually 3–6 bullets)
+     for every Midnight raid released through Season 2 / 12.1.5:
+     The Venomous Abyss, The Unbinding of Kith'ix, The Tidebound Grotto
+     (lair raid, not a 5-man), The Voidspire, The Dreamrift, March on
+     Quel'Danas, and Sporefall. Dummy Dome and unreleased Season 3 raids
+     are not included. Coiled Altar Phase 3 bonus-health numbers are
+     unchanged from v1.0.0.
+   - The same format for every Midnight dungeon (including leveling /
+     non-M+ ones) plus the three legacy dungeons in the current Season 2
+     Mythic+ pool. Season 2 M+ dungeons keep their Orboro kick-priority
+     lists. Season 1-only legacy dungeons are not included.
+   - Delve notes (general + solo / small-group tips) for every Midnight
+     delve end boss, story-variant ends, both Nemesis bosses (Nullaeus
+     and Azta'rec), and the Labyrinth of Kindo'jan megadelve. The
+     Midnight companion is Valeera Sanguinar, not Brann.
+   - The browse dropdown is organized Raid > raid > boss, Dungeon >
+     dungeon > boss, and Delve > delve > boss, and it scrolls.
+   - Notes can pop up at ENCOUNTER_START, or when you target a matching
+     name (when the game still lets addons read it). Delves also match
+     the instance name when that is readable. You can always browse by
+     hand. Your custom notes are still saved in KickBossNotesDB under
+     the same boss keys as v1.0.0.
 
 
 How group sync works
@@ -75,9 +89,10 @@ chat lockdown), not from a missing feature in this addon:
   tries. It cannot automatically detect that someone landed a kick.
 - Enemy cast names and whether a cast is interruptible are secret during
   restricted combat, so the bar cannot highlight "kick this now" for you.
-- NPC names and IDs are often secret inside dungeons and raids, so the
-  notes panel may not open from targeting mid-instance. Use the dropdown
-  or wait for ENCOUNTER_START when the encounter name is available.
+- NPC names and IDs are often secret inside dungeons, raids, and delves,
+  so the notes panel may not open from targeting mid-instance. Use the
+  dropdown, wait for ENCOUNTER_START, or (in delves) rely on the instance
+  name when it is readable.
 - Other players' cooldowns are not readable in those same situations.
 - Addon messages cannot be sent during an encounter or a key. There is
   no legal way around that; we queue and flush afterwards.
@@ -85,14 +100,20 @@ chat lockdown), not from a missing feature in this addon:
 
 Unverified items
 ----------------
-- Instance map IDs for the five Midnight-original Season 2 dungeons were
-  not on the public InstanceID list, so those dungeons are matched by
-  instance name (and by the active keystone map name). Legacy IDs for
-  Ruby Life Pools (2521), Kings' Rest (1762), and Temple of Sethraliss
-  (1877) are from Warcraft Wiki and should be solid.
-- Encounter IDs for Venomous Abyss bosses were not listed in the Wowhead
-  guides; notes match on encounter or boss name when that name is not
-  secret.
+- Instance map IDs for Midnight-original raids, dungeons, and delves were
+  not on the public InstanceID list, so those are matched by instance
+  name (and, for M+ dungeons, by the active keystone map name). Legacy
+  IDs for Ruby Life Pools (2521), Kings' Rest (1762), and Temple of
+  Sethraliss (1877) are from Warcraft Wiki and should be solid.
+- Encounter IDs are generally unpublished; notes match on encounter,
+  boss, or alias name when that name is not secret.
+- Crown of the Cosmos stage script was thin on Wowhead; those bullets
+  are marked UNVERIFIED.
+- Several dungeon bosses still have thin public scripts (notably Xathuux,
+  Taz'Rah, Nalorakk, Lothraxion) and several delve story-variant bosses
+  are name-confirmed only. The browse list tags those as unverified.
+- Which Grudge Pit end boss is the "default" varies by source
+  (Brightthorn vs Mycomight).
 - Restoration Druid is treated as having no baseline kick. A talent may
   grant Skull Bash (unverified for 12.1.5).
 - Devourer's specialization ID has been reported as 1473 or 1480. All
