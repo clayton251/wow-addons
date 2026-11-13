@@ -1,4 +1,4 @@
-Clayton's Kick & Boss Notes  v1.1.0
+Kardgaz's Kick & Boss Notes  v1.1.1
 ===================================
 
 Display-only World of Warcraft addon for Midnight (patch 12.1.5, interface

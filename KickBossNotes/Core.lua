@@ -1,5 +1,5 @@
 --[[
-  Clayton's Kick & Boss Notes — core, SavedVariables, secret-safe helpers,
+  Kardgaz's Kick & Boss Notes — core, SavedVariables, secret-safe helpers,
   slash commands, and event dispatch.
 
   This addon is display-only. It never casts, clicks, or automates gameplay.
@@ -9,8 +9,8 @@ local ADDON, ns = ...
 _G.KickBossNotes = ns
 
 ns.ADDON_NAME = ADDON
-ns.TITLE = "Clayton's Kick & Boss Notes"
-ns.VERSION = "1.1.0"
+ns.TITLE = "Kardgaz's Kick & Boss Notes"
+ns.VERSION = "1.1.1"
 ns.PROTO = 1
 ns.PREFIX = "KBNKICK"
 
@@ -432,7 +432,7 @@ local function SlashHandler(msg)
       ns.ToggleConfig()
     end
   elseif msg == "help" or msg == "?" then
-    ns.Print("Clayton's Kick & Boss Notes v" .. ns.VERSION)
+    ns.Print("Kardgaz's Kick & Boss Notes v" .. ns.VERSION)
     for line in SLASH_HELP:gmatch("[^\n]+") do
       ns.Print(line)
     end

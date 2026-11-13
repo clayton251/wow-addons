@@ -1,4 +1,4 @@
-Alt Vault Checklist 2.1.0
+Alt Vault Checklist 2.1.1
 =========================
 A public testing build of an account-wide World of Warcraft retail addon
 for Midnight Season 2 (Interface 120105, patch 12.1.5).
@@ -187,7 +187,7 @@ How to report bugs
 ------------------
 When you report a problem, please include:
 
-  1. Addon version (2.1.0) and game build / patch, if you know it.
+  1. Addon version (2.1.1) and game build / patch, if you know it.
   2. What you were doing (/altcheck, logging in, swapping specs, etc.).
   3. Character class, spec, and (if relevant) hero talent.
   4. What you expected, and what happened instead.

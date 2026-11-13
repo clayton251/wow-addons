@@ -1127,7 +1127,7 @@ local function BuildOptionsPage(parent)
   about:SetPoint("TOPLEFT", 28, y - 60)
   about:SetWidth(800)
   about:SetTextColor(0.8, 0.8, 0.8)
-  about:SetText("Clayton's Kick & Boss Notes is display-only. It never casts or automates combat.\n\nIn Midnight, addons cannot read the combat log, and they cannot compare enemy casts, other players' cooldowns, or NPC names during a dungeon or raid lockdown. The kick order is set out of combat (or between bosses) and shown as a static rotation. Click I Kicked to advance it. Your own interrupt cooldown swirl still displays; the number is shown only when Blizzard allows it. Other players' timers are estimates from that button.\n\nAddon messages (prefix KBNKICK) sync the order in party, raid, and instance groups, but Blizzard blocks those messages during a boss encounter or a Mythic+ run. They are queued and sent when the lock ends.")
+  about:SetText("Kardgaz's Kick & Boss Notes is display-only. It never casts or automates combat.\n\nIn Midnight, addons cannot read the combat log, and they cannot compare enemy casts, other players' cooldowns, or NPC names during a dungeon or raid lockdown. The kick order is set out of combat (or between bosses) and shown as a static rotation. Click I Kicked to advance it. Your own interrupt cooldown swirl still displays; the number is shown only when Blizzard allows it. Other players' timers are estimates from that button.\n\nAddon messages (prefix KBNKICK) sync the order in party, raid, and instance groups, but Blizzard blocks those messages during a boss encounter or a Mythic+ run. They are queued and sent when the lock ends.")
 end
 
 local function BuildConfig()
